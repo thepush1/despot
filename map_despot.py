@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from matplotlib.patches import FancyArrowPatch
 
 points = {
     'Viterbo (?)': (12.1075465, 42.4204278), '2 & 5. Malta': (14.5220972, 35.8880695),
@@ -52,6 +53,32 @@ x_path = [points[loc][0] for loc in sequence]
 y_path = [points[loc][1] for loc in sequence]
 ax.plot(x_path, y_path, color='#A89F91', linewidth=1.2, linestyle='-', alpha=0.6, 
         zorder=1, transform=ccrs.PlateCarree())
+
+# Add directional arrows along the path
+for i in range(len(sequence) - 1):
+    start_loc = sequence[i]
+    end_loc = sequence[i + 1]
+    
+    x1, y1 = points[start_loc]
+    x2, y2 = points[end_loc]
+    
+    # Calculate midpoint for arrow placement
+    mid_x = (x1 + x2) / 2
+    mid_y = (y1 + y2) / 2
+    
+    # Calculate direction
+    dx = x2 - x1
+    dy = y2 - y1
+    
+    # Add arrow at midpoint
+    arrow = FancyArrowPatch(
+        (mid_x - dx*0.05, mid_y - dy*0.05),
+        (mid_x + dx*0.05, mid_y + dy*0.05),
+        arrowstyle='->', mutation_scale=15, 
+        color='#8B4513', linewidth=1.5, alpha=0.7,
+        zorder=2, transform=ccrs.PlateCarree()
+    )
+    ax.add_patch(arrow)
 
 # Plot all points
 x_points = [coords[0] for coords in points.values()]
