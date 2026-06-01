@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-from matplotlib.patches import FancyArrowPatch
+import numpy as np
 
 points = {
     'Viterbo (?)': (12.1075465, 42.4204278), '2 & 5. Malta': (14.5220972, 35.8880695),
@@ -54,7 +54,7 @@ y_path = [points[loc][1] for loc in sequence]
 ax.plot(x_path, y_path, color='#A89F91', linewidth=1.2, linestyle='-', alpha=0.6, 
         zorder=1, transform=ccrs.PlateCarree())
 
-# Add directional arrows along the path
+# Add directional arrows using annotate (works better with Cartopy)
 for i in range(len(sequence) - 1):
     start_loc = sequence[i]
     end_loc = sequence[i + 1]
@@ -66,19 +66,21 @@ for i in range(len(sequence) - 1):
     mid_x = (x1 + x2) / 2
     mid_y = (y1 + y2) / 2
     
-    # Calculate direction
+    # Calculate direction (normalized)
     dx = x2 - x1
     dy = y2 - y1
+    distance = np.sqrt(dx**2 + dy**2)
     
-    # Add arrow at midpoint
-    arrow = FancyArrowPatch(
-        (mid_x - dx*0.05, mid_y - dy*0.05),
-        (mid_x + dx*0.05, mid_y + dy*0.05),
-        arrowstyle='->', mutation_scale=15, 
-        color='#8B4513', linewidth=1.5, alpha=0.7,
-        zorder=2, transform=ccrs.PlateCarree()
-    )
-    ax.add_patch(arrow)
+    if distance > 0:
+        dx_norm = (dx / distance) * 0.3
+        dy_norm = (dy / distance) * 0.3
+        
+        # Use annotate to draw arrows - works better with Cartopy
+        ax.annotate('', xy=(mid_x + dx_norm, mid_y + dy_norm), 
+                   xytext=(mid_x - dx_norm, mid_y - dy_norm),
+                   arrowprops=dict(arrowstyle='->', color='#8B4513', lw=2, alpha=0.8),
+                   xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
+                   textcoords=ccrs.PlateCarree()._as_mpl_transform(ax))
 
 # Plot all points
 x_points = [coords[0] for coords in points.values()]
@@ -87,9 +89,9 @@ ax.scatter(x_points, y_points, color='#2C3E50', s=60, edgecolors='#F7F5F0', line
            zorder=2, transform=ccrs.PlateCarree())
 ax.scatter(x_points, y_points, color='#D4AF37', s=20, zorder=3, transform=ccrs.PlateCarree())
 
-# Add labels
+# Add labels with custom offsets
 label_offsets = {
-    '10. Thérouanne': (0.5, -1.5),  # Moved down for readability
+    '10. Thérouanne': (-3.0, -1.2),  # Moved significantly left and down
 }
 
 for name, (x, y) in points.items():
