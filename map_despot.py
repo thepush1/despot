@@ -88,8 +88,13 @@ ax.scatter(x_points, y_points, color='#2C3E50', s=60, edgecolors='#F7F5F0', line
 ax.scatter(x_points, y_points, color='#D4AF37', s=20, zorder=3, transform=ccrs.PlateCarree())
 
 # Add labels
+label_offsets = {
+    '10. Thérouanne': (0.5, -1.5),  # Moved down for readability
+}
+
 for name, (x, y) in points.items():
-    ax.text(x + 0.5, y + 0.5, name, fontsize=8, color='#1A1A1A', 
+    offset_x, offset_y = label_offsets.get(name, (0.5, 0.5))
+    ax.text(x + offset_x, y + offset_y, name, fontsize=8, color='#1A1A1A', 
             fontfamily='serif', fontweight='500', 
             bbox=dict(facecolor='#F7F5F0', edgecolor='none', alpha=0.8, pad=0.3),
             transform=ccrs.PlateCarree(), zorder=4)
