@@ -31,7 +31,7 @@
             padding: 12px 16px;
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 500;
+            z-index: 1000;
             font-weight: 500;
             color: #333;
             font-size: 14px;
@@ -49,38 +49,45 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            z-index: 500;
+            z-index: 1000;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: background 0.2s;
+            transition: all 0.3s ease;
         }
         
         .expand-btn:hover {
             background: rgba(21, 128, 223, 0.95);
+            transform: scale(1.05);
+        }
+        
+        .expand-btn.hidden {
+            display: none;
         }
         
         .stops-panel {
             position: absolute;
             bottom: 10px;
             right: 10px;
-            background: rgba(255, 255, 255, 0.98);
+            background: rgba(255, 255, 255, 0.99);
             border-radius: 4px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-            z-index: 500;
-            width: 300px;
+            z-index: 1000;
+            width: 320px;
             max-height: 75vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             font-size: 12px;
             border: 1px solid #e0e0e0;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            pointer-events: none;
         }
         
-        .stops-panel.collapsed {
-            max-height: 0;
-            overflow: hidden;
-            border: none;
-            box-shadow: none;
-            padding: 0;
+        .stops-panel.open {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
         }
         
         .stops-title {
@@ -103,14 +110,17 @@
             cursor: pointer;
             color: #666;
             padding: 0;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 2px;
+            transition: all 0.2s;
         }
         
         .close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
             color: #333;
         }
         
@@ -123,7 +133,7 @@
         .stop-item {
             padding: 8px 10px;
             margin: 3px 0;
-            border-left: 3px solid #2196F3;
+            border-left: 4px solid #2196F3;
             background: #f9f9f9;
             color: #555;
             line-height: 1.5;
@@ -137,6 +147,7 @@
             background: #e3f2fd;
             border-left-color: #1976D2;
             padding-left: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         }
         
         .stop-number {
@@ -152,7 +163,6 @@
             font-weight: 500;
         }
         
-        /* Scrollbar styling */
         .stops-list::-webkit-scrollbar {
             width: 6px;
         }
@@ -170,38 +180,42 @@
             background: #888;
         }
         
-        .leaflet-popup-content {
-            font-size: 13px;
-            margin: 0;
-        }
-        
-        .leaflet-popup-content-wrapper {
-            border-radius: 4px;
+        svg.arrow-marker {
+            overflow: visible;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
     <div class="title-bar">Călătoriile lui Despot Vodă</div>
-    <button class="expand-btn" id="expandBtn" onclick="togglePanel()">📍 Popasuri (29)</button>
-    <div class="stops-panel collapsed" id="stopsPanel">
+    <button class="expand-btn" id="expandBtn">📍 Popasuri (29)</button>
+    <div class="stops-panel" id="stopsPanel">
         <div class="stops-title">
             <span>Popasuri (Stops)</span>
-            <button class="close-btn" onclick="togglePanel()">✕</button>
+            <button class="close-btn" id="closeBtn">✕</button>
         </div>
         <div class="stops-list" id="stopsList"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-arrowheads@1.4.0/leaflet-arrowheads.js"></script>
     <script>
-        // Toggle panel visibility
-        function togglePanel() {
-            const panel = document.getElementById('stopsPanel');
-            const btn = document.getElementById('expandBtn');
-            panel.classList.toggle('collapsed');
-            btn.style.display = panel.classList.contains('collapsed') ? 'block' : 'none';
+        // Panel toggle functions
+        const expandBtn = document.getElementById('expandBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const stopsPanel = document.getElementById('stopsPanel');
+        
+        function openPanel() {
+            stopsPanel.classList.add('open');
+            expandBtn.classList.add('hidden');
         }
+        
+        function closePanel() {
+            stopsPanel.classList.remove('open');
+            expandBtn.classList.remove('hidden');
+        }
+        
+        expandBtn.addEventListener('click', openPanel);
+        closeBtn.addEventListener('click', closePanel);
         
         // Initialize map
         const map = L.map('map').setView([50, 15], 4);
@@ -211,6 +225,9 @@
             attribution: '© OpenStreetMap',
             maxZoom: 19
         }).addTo(map);
+        
+        // SVG Layer for arrows
+        const svgLayer = L.featureGroup().addTo(map);
         
         // Stops data
         const stops = [
@@ -264,6 +281,44 @@
             markers[stop.id] = { marker, stop };
         });
         
+        // Function to draw arrow between two points
+        function drawArrow(fromLat, fromLng, toLat, toLng) {
+            const polyline = L.polyline(
+                [[fromLat, fromLng], [toLat, toLng]],
+                { 
+                    color: '#2196F3', 
+                    weight: 2.5, 
+                    opacity: 0.7,
+                    dashArray: '5, 3'
+                }
+            ).addTo(map);
+            
+            // Draw arrowhead at end
+            const headlen = 20;
+            const angle = Math.atan2(toLat - fromLat, toLng - fromLng);
+            
+            // Create arrowhead as a small triangle using SVG
+            const arrowGroup = L.featureGroup();
+            
+            // Create polygon for arrowhead
+            const p1 = L.latLng(
+                toLat - headlen * Math.cos(angle - Math.PI / 6) / 111000,
+                toLng - headlen * Math.sin(angle - Math.PI / 6) / 111000 / Math.cos(toLat * Math.PI / 180)
+            );
+            const p2 = L.latLng(
+                toLat - headlen * Math.cos(angle + Math.PI / 6) / 111000,
+                toLng - headlen * Math.sin(angle + Math.PI / 6) / 111000 / Math.cos(toLat * Math.PI / 180)
+            );
+            
+            const arrowhead = L.polyline([p1, [toLat, toLng], p2], {
+                color: '#2196F3',
+                weight: 2.5,
+                fill: true,
+                fillColor: '#2196F3',
+                fillOpacity: 0.7
+            }).addTo(map);
+        }
+        
         // Draw lines with arrows between consecutive stops
         for (let i = 0; i < journey.length - 1; i++) {
             const fromId = journey[i];
@@ -271,24 +326,7 @@
             const fromStop = stops.find(s => s.id === fromId);
             const toStop = stops.find(s => s.id === toId);
             
-            const line = L.polyline(
-                [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]],
-                { 
-                    color: '#2196F3', 
-                    weight: 2.5, 
-                    opacity: 0.7,
-                    dashArray: '5, 3',
-                    className: 'journey-line'
-                }
-            ).addTo(map);
-            
-            // Add arrow
-            line.arrowheads({
-                size: '25px',
-                frequency: 'endonly',
-                color: '#2196F3',
-                fill: true
-            });
+            drawArrow(fromStop.lat, fromStop.lng, toStop.lat, toStop.lng);
         }
         
         // Populate stops panel
