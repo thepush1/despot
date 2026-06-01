@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Călătoriile lui Despot Vodă</title>
+    <title>Călătoriile lui Despot Vodă - Static Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
@@ -14,224 +14,145 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .map-section {
+            flex: 1;
+            min-width: 600px;
+        }
+        
+        .stops-section {
+            width: 280px;
+            flex-shrink: 0;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #333;
         }
         
         #map {
             width: 100%;
-            height: 100vh;
-            position: relative;
-        }
-        
-        .title-bar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 12px 16px;
+            height: 600px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
         }
         
-        .expand-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(33, 150, 243, 0.95);
-            color: white;
-            padding: 10px 14px;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-        }
-        
-        .expand-btn:hover {
-            background: rgba(21, 128, 223, 0.95);
-            transform: scale(1.05);
-        }
-        
-        .expand-btn.hidden {
-            display: none;
-        }
-        
-        .stops-panel {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.99);
-            border-radius: 4px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-            width: 320px;
-            max-height: 75vh;
-            overflow: hidden;
+        .download-section {
+            margin-top: 20px;
             display: flex;
-            flex-direction: column;
-            font-size: 12px;
-            border: 1px solid #e0e0e0;
-            opacity: 0;
-            transform: translateX(400px);
-            transition: all 0.3s ease;
-            pointer-events: none;
+            gap: 10px;
         }
         
-        .stops-panel.open {
-            opacity: 1;
-            transform: translateX(0);
-            pointer-events: auto;
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        button:active {
+            transform: scale(0.98);
         }
         
         .stops-title {
-            padding: 12px 14px;
-            border-bottom: 1px solid #e0e0e0;
             font-weight: 600;
             color: #333;
-            background: #fafafa;
-            border-radius: 4px 4px 0 0;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 2px;
-            transition: all 0.2s;
-        }
-        
-        .close-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: #333;
+            margin-bottom: 12px;
+            font-size: 13px;
         }
         
         .stops-list {
-            padding: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
             overflow-y: auto;
-            flex: 1;
+            max-height: 650px;
+            background: #fafafa;
         }
         
         .stop-item {
             padding: 8px 10px;
-            margin: 3px 0;
-            border-left: 4px solid #2196F3;
-            background: #f9f9f9;
-            color: #555;
-            line-height: 1.5;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 2px;
+            border-bottom: 1px solid #e8e8e8;
+            border-left: 3px solid #2196F3;
             font-size: 12px;
+            color: #555;
+            line-height: 1.4;
         }
         
-        .stop-item:hover {
-            background: #e3f2fd;
-            border-left-color: #1976D2;
-            padding-left: 12px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        .stop-item:last-child {
+            border-bottom: none;
         }
         
         .stop-number {
             font-weight: 700;
             color: #2196F3;
-            margin-right: 6px;
-            min-width: 20px;
-            display: inline-block;
+            margin-right: 4px;
         }
         
-        .stop-name {
-            color: #333;
-            font-weight: 500;
-        }
-        
-        .stops-list::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .stops-list::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        .stops-list::-webkit-scrollbar-thumb {
-            background: #bbb;
-            border-radius: 3px;
-        }
-        
-        .stops-list::-webkit-scrollbar-thumb:hover {
-            background: #888;
-        }
-        
-        svg.arrow-marker {
-            overflow: visible;
+        .question-mark {
+            font-size: 10px;
+            color: #f44336;
+            font-weight: bold;
+            margin-left: 2px;
         }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <div class="title-bar">Călătoriile lui Despot Vodă</div>
-    <button class="expand-btn" id="expandBtn">📍 Popasuri (29)</button>
-    <div class="stops-panel" id="stopsPanel">
-        <div class="stops-title">
-            <span>Popasuri (Stops)</span>
-            <button class="close-btn" id="closeBtn">✕</button>
+    <h1>Călătoriile lui Despot Vodă</h1>
+    
+    <div class="container">
+        <div class="map-section">
+            <div id="map"></div>
+            <div class="download-section">
+                <button onclick="downloadMapImage()">📥 Download PNG</button>
+                <button onclick="downloadMapPDF()">📄 Download PDF</button>
+            </div>
         </div>
-        <div class="stops-list" id="stopsList"></div>
+        
+        <div class="stops-section">
+            <div class="stops-title">Popasuri (Stops)</div>
+            <div class="stops-list" id="stopsList"></div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
-        // Panel toggle functions
-        const expandBtn = document.getElementById('expandBtn');
-        const closeBtn = document.getElementById('closeBtn');
-        const stopsPanel = document.getElementById('stopsPanel');
-        
-        function openPanel() {
-            stopsPanel.classList.add('open');
-            expandBtn.classList.add('hidden');
-        }
-        
-        function closePanel() {
-            stopsPanel.classList.remove('open');
-            expandBtn.classList.remove('hidden');
-        }
-        
-        expandBtn.addEventListener('click', openPanel);
-        closeBtn.addEventListener('click', closePanel);
-        
         // Initialize map
         const map = L.map('map').setView([50, 15], 4);
         
-        // Minimalist tile layer
+        // Tile layer
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap',
             maxZoom: 19
         }).addTo(map);
         
-        // SVG Layer for arrows
-        const svgLayer = L.featureGroup().addTo(map);
-        
         // Stops data
         const stops = [
-            { id: 1, name: 'Viterbo', lat: 42.4204278, lng: 12.1075465 },
+            { id: 1, name: 'Viterbo', lat: 42.4204278, lng: 12.1075465, question: true },
             { id: 2, name: 'Malta', lat: 35.8880695, lng: 14.5220972 },
             { id: 3, name: 'Crete', lat: 35.240117, lng: 24.8092691 },
             { id: 4, name: 'Chios', lat: 38.3712527, lng: 26.1360248 },
@@ -262,86 +183,128 @@
             { id: 29, name: 'Suceava', lat: 47.6634521, lng: 26.2732302 }
         ];
         
-        // Chronological journey sequence
+        // Journey sequence
         const journey = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
         
-        // Create markers
-        const markers = {};
+        // Draw circles for stops
         stops.forEach(stop => {
-            const marker = L.circleMarker([stop.lat, stop.lng], {
-                radius: 7,
+            L.circleMarker([stop.lat, stop.lng], {
+                radius: 6,
                 fillColor: '#2196F3',
                 color: '#fff',
-                weight: 2.5,
+                weight: 2,
                 opacity: 1,
                 fillOpacity: 0.85
-            }).addTo(map);
-            
-            marker.bindPopup(`<strong>${stop.id}. ${stop.name}</strong>`);
-            markers[stop.id] = { marker, stop };
+            }).bindPopup(`<strong>${stop.id}. ${stop.name}</strong>`).addTo(map);
         });
         
-        // Function to draw arrow between two points
-        function drawArrow(fromLat, fromLng, toLat, toLng) {
-            const polyline = L.polyline(
-                [[fromLat, fromLng], [toLat, toLng]],
-                { 
-                    color: '#2196F3', 
-                    weight: 2.5, 
-                    opacity: 0.7,
-                    dashArray: '5, 3'
-                }
-            ).addTo(map);
-            
-            // Draw arrowhead at end
-            const headlen = 20;
-            const angle = Math.atan2(toLat - fromLat, toLng - fromLng);
-            
-            // Create arrowhead as a small triangle using SVG
-            const arrowGroup = L.featureGroup();
-            
-            // Create polygon for arrowhead
-            const p1 = L.latLng(
-                toLat - headlen * Math.cos(angle - Math.PI / 6) / 111000,
-                toLng - headlen * Math.sin(angle - Math.PI / 6) / 111000 / Math.cos(toLat * Math.PI / 180)
-            );
-            const p2 = L.latLng(
-                toLat - headlen * Math.cos(angle + Math.PI / 6) / 111000,
-                toLng - headlen * Math.sin(angle + Math.PI / 6) / 111000 / Math.cos(toLat * Math.PI / 180)
-            );
-            
-            const arrowhead = L.polyline([p1, [toLat, toLng], p2], {
-                color: '#2196F3',
-                weight: 2.5,
-                fill: true,
-                fillColor: '#2196F3',
-                fillOpacity: 0.7
-            }).addTo(map);
-        }
-        
-        // Draw lines with arrows between consecutive stops
+        // Draw journey lines with arrows
         for (let i = 0; i < journey.length - 1; i++) {
             const fromId = journey[i];
             const toId = journey[i + 1];
             const fromStop = stops.find(s => s.id === fromId);
             const toStop = stops.find(s => s.id === toId);
             
-            drawArrow(fromStop.lat, fromStop.lng, toStop.lat, toStop.lng);
+            // Draw line
+            L.polyline(
+                [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]],
+                { 
+                    color: '#2196F3', 
+                    weight: 2, 
+                    opacity: 0.7,
+                    dashArray: '5, 3'
+                }
+            ).addTo(map);
+            
+            // Draw arrowhead
+            const mid = [(fromStop.lat + toStop.lat) / 2, (fromStop.lng + toStop.lng) / 2];
+            const angle = Math.atan2(toStop.lat - fromStop.lat, toStop.lng - fromStop.lng);
+            
+            // Arrow marker at end of line
+            const headlen = 0.0003;
+            const p1Lat = toStop.lat - headlen * Math.cos(angle - Math.PI / 6);
+            const p1Lng = toStop.lng - headlen * Math.sin(angle - Math.PI / 6);
+            const p2Lat = toStop.lat - headlen * Math.cos(angle + Math.PI / 6);
+            const p2Lng = toStop.lng - headlen * Math.sin(angle + Math.PI / 6);
+            
+            L.polyline(
+                [[p1Lat, p1Lng], [toStop.lat, toStop.lng], [p2Lat, p2Lng]],
+                {
+                    color: '#2196F3',
+                    weight: 2,
+                    opacity: 0.8,
+                    fill: false
+                }
+            ).addTo(map);
         }
         
-        // Populate stops panel
+        // Populate stops list
         const stopsList = document.getElementById('stopsList');
         stops.forEach(stop => {
             const item = document.createElement('div');
             item.className = 'stop-item';
-            item.innerHTML = `<span class="stop-number">${stop.id}.</span><span class="stop-name">${stop.name}</span>`;
-            item.addEventListener('click', () => {
-                const marker = markers[stop.id].marker;
-                map.setView([stop.lat, stop.lng], 8);
-                marker.openPopup();
-            });
+            const questionMark = stop.question ? '<span class="question-mark">(?)</span>' : '';
+            item.innerHTML = `<span class="stop-number">${stop.id}.</span> ${stop.name}${questionMark}`;
             stopsList.appendChild(item);
         });
+        
+        // Download as PNG
+        async function downloadMapImage() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ Processing...';
+            
+            try {
+                const canvas = await html2canvas(document.querySelector('.container'), {
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    scale: 2
+                });
+                
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'Calatoriile-lui-Despot-Voda.png';
+                link.click();
+                
+                btn.disabled = false;
+                btn.textContent = '📥 Download PNG';
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error generating image');
+                btn.disabled = false;
+                btn.textContent = '📥 Download PNG';
+            }
+        }
+        
+        // Download as PDF
+        async function downloadMapPDF() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ Processing...';
+            
+            try {
+                const element = document.querySelector('.container');
+                const opt = {
+                    margin: 10,
+                    filename: 'Calatoriile-lui-Despot-Voda.pdf',
+                    image: { type: 'png', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+                    jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
+                };
+                
+                html2pdf().set(opt).from(element).save();
+                
+                btn.disabled = false;
+                btn.textContent = '📄 Download PDF';
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error generating PDF');
+                btn.disabled = false;
+                btn.textContent = '📄 Download PDF';
+            }
+        }
     </script>
 </body>
 </html>
