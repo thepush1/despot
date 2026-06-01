@@ -1,0 +1,42 @@
+name: Generate Despot Vodă Map
+
+on:
+  push:
+    paths:
+      - 'map_despot.py'
+  workflow_dispatch:
+
+jobs:
+  generate-map:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install matplotlib
+      
+      - name: Run map generation script
+        run: python map_despot.py
+      
+      - name: Upload generated image
+        uses: actions/upload-artifact@v3
+        with:
+          name: despot-map
+          path: infografie_despot_voda.png
+      
+      - name: Commit and push image
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add infografie_despot_voda.png
+          git commit -m "Generate Despot Vodă map visualization" || echo "No changes to commit"
+          git push
