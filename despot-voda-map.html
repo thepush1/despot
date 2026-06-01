@@ -34,6 +34,28 @@
             z-index: 500;
             font-weight: 500;
             color: #333;
+            font-size: 14px;
+        }
+        
+        .expand-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(33, 150, 243, 0.95);
+            color: white;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s;
+        }
+        
+        .expand-btn:hover {
+            background: rgba(21, 128, 223, 0.95);
         }
         
         .stops-panel {
@@ -42,64 +64,110 @@
             right: 10px;
             background: rgba(255, 255, 255, 0.98);
             border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
             z-index: 500;
-            width: 280px;
-            max-height: 70vh;
-            overflow-y: auto;
+            width: 300px;
+            max-height: 75vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             font-size: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stops-panel.collapsed {
+            max-height: 0;
+            overflow: hidden;
+            border: none;
+            box-shadow: none;
+            padding: 0;
         }
         
         .stops-title {
-            padding: 12px;
+            padding: 12px 14px;
             border-bottom: 1px solid #e0e0e0;
             font-weight: 600;
             color: #333;
             background: #fafafa;
             border-radius: 4px 4px 0 0;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            color: #333;
         }
         
         .stops-list {
             padding: 8px;
+            overflow-y: auto;
+            flex: 1;
         }
         
         .stop-item {
-            padding: 6px 8px;
-            margin: 2px 0;
+            padding: 8px 10px;
+            margin: 3px 0;
             border-left: 3px solid #2196F3;
             background: #f9f9f9;
             color: #555;
-            line-height: 1.4;
+            line-height: 1.5;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            border-radius: 2px;
+            font-size: 12px;
         }
         
         .stop-item:hover {
-            background: #f0f0f0;
+            background: #e3f2fd;
+            border-left-color: #1976D2;
+            padding-left: 12px;
         }
         
         .stop-number {
-            font-weight: 600;
+            font-weight: 700;
             color: #2196F3;
-            margin-right: 4px;
+            margin-right: 6px;
+            min-width: 20px;
+            display: inline-block;
+        }
+        
+        .stop-name {
+            color: #333;
+            font-weight: 500;
         }
         
         /* Scrollbar styling */
-        .stops-panel::-webkit-scrollbar {
+        .stops-list::-webkit-scrollbar {
             width: 6px;
         }
         
-        .stops-panel::-webkit-scrollbar-track {
+        .stops-list::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
         
-        .stops-panel::-webkit-scrollbar-thumb {
-            background: #888;
+        .stops-list::-webkit-scrollbar-thumb {
+            background: #bbb;
             border-radius: 3px;
         }
         
-        .stops-panel::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        .stops-list::-webkit-scrollbar-thumb:hover {
+            background: #888;
         }
         
         .leaflet-popup-content {
@@ -115,14 +183,26 @@
 <body>
     <div id="map"></div>
     <div class="title-bar">Călătoriile lui Despot Vodă</div>
-    <div class="stops-panel">
-        <div class="stops-title">Popasuri (Stops)</div>
+    <button class="expand-btn" id="expandBtn" onclick="togglePanel()">📍 Popasuri (29)</button>
+    <div class="stops-panel collapsed" id="stopsPanel">
+        <div class="stops-title">
+            <span>Popasuri (Stops)</span>
+            <button class="close-btn" onclick="togglePanel()">✕</button>
+        </div>
         <div class="stops-list" id="stopsList"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-arrowheads@1.4.0/leaflet-arrowheads.js"></script>
     <script>
+        // Toggle panel visibility
+        function togglePanel() {
+            const panel = document.getElementById('stopsPanel');
+            const btn = document.getElementById('expandBtn');
+            panel.classList.toggle('collapsed');
+            btn.style.display = panel.classList.contains('collapsed') ? 'block' : 'none';
+        }
+        
         // Initialize map
         const map = L.map('map').setView([50, 15], 4);
         
@@ -172,12 +252,12 @@
         const markers = {};
         stops.forEach(stop => {
             const marker = L.circleMarker([stop.lat, stop.lng], {
-                radius: 6,
+                radius: 7,
                 fillColor: '#2196F3',
                 color: '#fff',
-                weight: 2,
+                weight: 2.5,
                 opacity: 1,
-                fillOpacity: 0.8
+                fillOpacity: 0.85
             }).addTo(map);
             
             marker.bindPopup(`<strong>${stop.id}. ${stop.name}</strong>`);
@@ -193,14 +273,21 @@
             
             const line = L.polyline(
                 [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]],
-                { color: '#666', weight: 2, opacity: 0.6, dashArray: '4, 2' }
+                { 
+                    color: '#2196F3', 
+                    weight: 2.5, 
+                    opacity: 0.7,
+                    dashArray: '5, 3',
+                    className: 'journey-line'
+                }
             ).addTo(map);
             
             // Add arrow
             line.arrowheads({
-                size: '20px',
+                size: '25px',
                 frequency: 'endonly',
-                color: '#666'
+                color: '#2196F3',
+                fill: true
             });
         }
         
@@ -209,7 +296,7 @@
         stops.forEach(stop => {
             const item = document.createElement('div');
             item.className = 'stop-item';
-            item.innerHTML = `<span class="stop-number">${stop.id}.</span> ${stop.name}`;
+            item.innerHTML = `<span class="stop-number">${stop.id}.</span><span class="stop-name">${stop.name}</span>`;
             item.addEventListener('click', () => {
                 const marker = markers[stop.id].marker;
                 map.setView([stop.lat, stop.lng], 8);
