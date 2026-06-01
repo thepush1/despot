@@ -117,6 +117,19 @@
             font-weight: bold;
             margin-left: 2px;
         }
+        
+        .leaflet-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -186,7 +199,7 @@
         // Journey sequence
         const journey = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
         
-        // Draw circles for stops
+        // Draw circles for stops with names
         stops.forEach(stop => {
             L.circleMarker([stop.lat, stop.lng], {
                 radius: 6,
@@ -196,9 +209,20 @@
                 opacity: 1,
                 fillOpacity: 0.85
             }).bindPopup(`<strong>${stop.id}. ${stop.name}</strong>`).addTo(map);
+            
+            // Add label for each stop
+            const label = L.marker([stop.lat, stop.lng], {
+                icon: L.divIcon({
+                    className: 'leaflet-label',
+                    html: `<div style="display: inline-block; background: rgba(255,255,255,0.92); padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 500; white-space: nowrap; border: 1px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">${stop.name}</div>`,
+                    iconSize: null,
+                    iconAnchor: [0, 0],
+                    popupAnchor: [0, 0]
+                })
+            }).addTo(map);
         });
         
-        // Draw journey lines with arrows
+        // Draw journey lines with arrows and direction labels
         for (let i = 0; i < journey.length - 1; i++) {
             const fromId = journey[i];
             const toId = journey[i + 1];
@@ -210,32 +234,44 @@
                 [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]],
                 { 
                     color: '#2196F3', 
-                    weight: 2, 
+                    weight: 2.5, 
                     opacity: 0.7,
                     dashArray: '5, 3'
                 }
             ).addTo(map);
             
-            // Draw arrowhead
-            const mid = [(fromStop.lat + toStop.lat) / 2, (fromStop.lng + toStop.lng) / 2];
+            // Calculate angle for arrowhead
             const angle = Math.atan2(toStop.lat - fromStop.lat, toStop.lng - fromStop.lng);
-            
-            // Arrow marker at end of line
-            const headlen = 0.0003;
+            const headlen = 0.0004;
             const p1Lat = toStop.lat - headlen * Math.cos(angle - Math.PI / 6);
             const p1Lng = toStop.lng - headlen * Math.sin(angle - Math.PI / 6);
             const p2Lat = toStop.lat - headlen * Math.cos(angle + Math.PI / 6);
             const p2Lng = toStop.lng - headlen * Math.sin(angle + Math.PI / 6);
             
+            // Draw arrowhead
             L.polyline(
                 [[p1Lat, p1Lng], [toStop.lat, toStop.lng], [p2Lat, p2Lng]],
                 {
                     color: '#2196F3',
-                    weight: 2,
-                    opacity: 0.8,
+                    weight: 2.5,
+                    opacity: 0.85,
                     fill: false
                 }
             ).addTo(map);
+            
+            // Add direction label at midpoint
+            const midLat = (fromStop.lat + toStop.lat) / 2;
+            const midLng = (fromStop.lng + toStop.lng) / 2;
+            
+            const directionLabel = L.marker([midLat, midLng], {
+                icon: L.divIcon({
+                    className: 'leaflet-label',
+                    html: `<div style="display: inline-block; background: rgba(33, 150, 243, 0.85); color: white; padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; white-space: nowrap; border: 1px solid #1976D2;">${fromId} → ${toId}</div>`,
+                    iconSize: null,
+                    iconAnchor: [0, 0],
+                    popupAnchor: [0, 0]
+                })
+            }).addTo(map);
         }
         
         // Populate stops list
